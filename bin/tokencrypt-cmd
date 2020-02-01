@@ -1,0 +1,111 @@
+#!/usr/bin/env php
+<?php declare(strict_types=1);
+use ThreeEncr\TokenCrypt;
+
+$autoloads = [__DIR__ . '/../../autoload.php', __DIR__ . '/../vendor/autoload.php', __DIR__ . '/vendor/autoload.php'];
+foreach($autoloads as $autoload) {
+    if (file_exists($autoload)) {
+        require $autoload;
+        break;
+    }
+}
+
+$interactive = canInitInteractively();
+
+if ($interactive && $argc === 1) {
+    $tokenCrypt = initInteractive();
+} else {
+    if (!$interactive) {
+        echo "Warning: unable to read passwords from terminal\n";
+    }
+
+    $file = $argc < 2 ? 'secrets.txt' : $argv[1];
+    echo "Warning: reading file {$file} from command line\n";
+    $tokenCrypt = initFromFile($file);
+}
+
+
+echo "Interactive session: press Ctrl-D or type q to quit\n";
+
+while(1) {
+    $line = readline("plain or encrypted text> ");
+    if ($line === false) {
+        exit(0);
+    }
+    $line = trim($line);
+    if ($line == 'q') {
+        exit(0);
+    }
+    if (strpos($line, TokenCrypt::HEADER_V1) === 0) {
+        $decr = $tokenCrypt->decrypt3ncr($line);
+        if ($decr === false || $decr == $line) {
+            echo "decryption error\n";
+        } else {
+            echo "decrypted plaintext: ".$decr."\n";
+        }
+        continue;
+    }
+
+    echo "encrypted value: ".$tokenCrypt->encrypt3ncr($line)."\n";
+
+}
+
+function canInitInteractively(): bool {
+    $result = shell_exec('/bin/stty -a');
+    return is_string($result) && (strlen($result) > 1);
+}
+
+function initInteractive(): TokenCrypt {
+    $part1 = getPassword('Enter secret part 1: ');
+    $part2 = getPassword('Enter secret part 2: ');
+
+    while (1) {
+        $iter = trim(readline("Enter iterations number (1000): "));
+        if ($iter == '') {
+            $iter = 1000;
+        } else {
+            $iter = intval($iter);
+        }
+
+        if ($iter == 0) {
+            echo "error parsing integer\n";
+            continue;
+        }
+        break;
+    }
+
+    return new TokenCrypt($part1, $part2, $iter);
+}
+
+function initFromFile($fileName): TokenCrypt {
+    $fileData = trim(file_get_contents($fileName));
+    $items = array_map('trim', explode("\n", $fileData));
+    if (count($items) < 2) {
+        echo "Error: bad or non-existent {$fileName}\n";
+        exit(1);
+    }
+    if (count($items) < 3) {
+        echo "Warning: no iterations count specified, using 1000\n";
+    }
+    $iter = intval($items[2]);
+    if ($iter == 0) {
+        echo "Error: non-numeric or zero iterations count in secrets.txt: ".$items[2]."\n";
+        exit(1);
+    }
+
+    return new TokenCrypt($items[0], $items[1], $iter);
+}
+
+
+
+function getPassword($prompt): string {
+    echo $prompt;
+    system('/bin/stty -echo');
+    $password = trim(fgets(STDIN));
+    system('/bin/stty echo');
+    echo "\n";
+    if ($password == '') {
+        echo "Warning: empty password entered\n";
+    }
+    return $password;
+}
