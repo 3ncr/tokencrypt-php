@@ -32,4 +32,27 @@ class TokenCryptTest extends TestCase {
         }
     }
 
+    public function testDecrypt3ncrArray() {
+        $encs = array_keys($this->testVectors);
+
+        $encTest = [
+            'token1' => $encs[0],
+            'nonString' => 42,
+            'subarrays' => [ [ $encs[1], $encs[2] ], false, 'okay' ],
+            'justString' => 'string',
+        ];
+        $decs = array_values($this->testVectors);
+
+        $decTest = [
+            'token1' => $decs[0],
+            'nonString' => 42,
+            'subarrays' => [ [ $decs[1], $decs[2] ], false, 'okay' ],
+            'justString' => 'string',
+        ];
+
+        $t = new TokenCrypt('a', 'b', 1000);
+
+        $decArray = $t->decrypt3ncrArray($encTest);
+        $this->assertEquals($decTest, $decArray);
+    }
 }

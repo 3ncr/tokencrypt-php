@@ -8,7 +8,13 @@ class TokenCrypt implements JsonSerializable {
     public const HEADER_V1 = "3ncr.org/1#";
     private $key;
 
-    public function __construct($part1, $part2, $iter) {
+    /**
+     * TokenCrypt constructor.
+     * @param $part1 - secret for encryption
+     * @param $part2 - salt for encryption
+     * @param int $iter - number of PBKDF2 iterations
+     */
+    public function __construct($part1, $part2, $iter=1000) {
         $this->key = hash_pbkdf2('sha3-256', $part1, $part2, $iter, 0, true);
     }
 
@@ -48,6 +54,10 @@ class TokenCrypt implements JsonSerializable {
         return $decrypted;
     }
 
+    /**
+     * @param $encrypted - encrypted 3ncr-string
+     * @return bool|string false if failed, input argument if it is not 3ncr-string or decrypted string
+     */
     public function decrypt3ncr($encrypted) {
         $header = substr($encrypted, 0, strlen(self::HEADER_V1));
         if ($header !== self::HEADER_V1) {
@@ -60,6 +70,27 @@ class TokenCrypt implements JsonSerializable {
             return $encrypted;
         }
         return $decrypted;
+    }
+
+
+    /**
+     * @param $dict - associative array
+     * @return array - copy of the array, where all 3ncr-strings in array values were decrypted
+     */
+    public function decrypt3ncrArray($dict): array {
+        $result = [];
+        foreach($dict as $k=>$v) {
+            if (is_string($v)) {
+                $result[$k] = $this->decrypt3ncr($v);
+            }
+            else if (is_array($v)) {
+                $result[$k] = $this->decrypt3ncrArray($v);
+            }
+            else {
+                $result[$k] = $v;
+            }
+        }
+        return $result;
     }
 
     // silly attempts to hide a variable in a dynamic language
