@@ -16,13 +16,13 @@ This is a PHP 7.1+ implementation.
 
 
 ```php
-$tokenCrypt = new \ThreeEncr\TokenCrypt($secret1, $secret2, 1000);
+$tokenCrypt = new \ThreeEncr\TokenCrypt($secret, $salt, 1000);
 ```
 
-`$secret1` and `$secret2` - are encryption keys (technically one of them is key, another is salt). 
+`$secret` and `$salt` - are encryption keys (technically one of them is key, another is salt, but you need to store them both somewhere). 
 
 You can store them any preferred places: environment variables, files, shared memory, 
-use serial numbers from /proc. Be creative. 
+drive from serial numbers or MAC. Be creative. 
 
 `1000` - is a number of PBKDF2 rounds. 
 The more is better and slower. 

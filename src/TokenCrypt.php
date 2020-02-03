@@ -10,12 +10,12 @@ class TokenCrypt implements JsonSerializable {
 
     /**
      * TokenCrypt constructor.
-     * @param $part1 - secret for encryption
-     * @param $part2 - salt for encryption
+     * @param $secret - secret for encryption
+     * @param $salt - salt for encryption
      * @param int $iter - number of PBKDF2 iterations
      */
-    public function __construct($part1, $part2, $iter=1000) {
-        $this->key = hash_pbkdf2('sha3-256', $part1, $part2, $iter, 0, true);
+    public function __construct($secret, $salt, $iter=1000) {
+        $this->key = hash_pbkdf2('sha3-256', $secret, $salt, $iter, 0, true);
     }
 
     /**
