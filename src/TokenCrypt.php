@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 namespace ThreeEncr;
 
 use JsonSerializable;
@@ -14,7 +14,7 @@ class TokenCrypt implements JsonSerializable {
      * @param $salt - salt for encryption
      * @param int $iter - number of PBKDF2 iterations
      */
-    public function __construct($secret, $salt, $iter=1000) {
+    public function __construct(string $secret, string $salt, int $iter=1000) {
         $this->key = hash_pbkdf2('sha3-256', $secret, $salt, $iter, 0, true);
     }
 
@@ -23,7 +23,7 @@ class TokenCrypt implements JsonSerializable {
      * @return string - encrypted string
      * @throws \Exception - rare case when PHP could not generate cryptographically secure random number
      */
-    public function encrypt3ncr($source) {
+    public function encrypt3ncr(string $source): string {
         $iv = random_bytes(12);
         $tag = '';
         $enc = openssl_encrypt($source,
@@ -38,7 +38,7 @@ class TokenCrypt implements JsonSerializable {
         return self::HEADER_V1 . rtrim(base64_encode($encAll), '=');
     }
 
-    private function decrypt($base64data) {
+    private function decrypt(string $base64data): ?string {
         $decdata = base64_decode($base64data);
         if (strlen($decdata) < 12+16) {
             return false;
@@ -51,6 +51,10 @@ class TokenCrypt implements JsonSerializable {
             $this->key,
             OPENSSL_RAW_DATA,
             $iv, $tag);
+        if ($decrypted === false) {
+            $decrypted = null;
+        }
+
         return $decrypted;
     }
 
@@ -58,7 +62,7 @@ class TokenCrypt implements JsonSerializable {
      * @param $encrypted - encrypted 3ncr-string
      * @return bool|string false if failed, input argument if it is not 3ncr-string or decrypted string
      */
-    public function decrypt3ncr($encrypted) {
+    public function decrypt3ncr(string $encrypted): ?string {
         $header = substr($encrypted, 0, strlen(self::HEADER_V1));
         if ($header !== self::HEADER_V1) {
             return $encrypted;
@@ -66,8 +70,8 @@ class TokenCrypt implements JsonSerializable {
 
         $data = substr($encrypted, strlen(self::HEADER_V1));
         $decrypted = $this->decrypt($data);
-        if ($decrypted === false) {
-            return $encrypted;
+        if ($decrypted === null) {
+            return null;
         }
         return $decrypted;
     }
@@ -77,7 +81,7 @@ class TokenCrypt implements JsonSerializable {
      * @param $dict - associative array
      * @return array - copy of the array, where all 3ncr-strings in array values were decrypted
      */
-    public function decrypt3ncrArray($dict): array {
+    public function decrypt3ncrArray(array $dict): array {
         $result = [];
         foreach($dict as $k=>$v) {
             if (is_string($v)) {

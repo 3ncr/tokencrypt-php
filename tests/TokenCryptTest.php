@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 use ThreeEncr\TokenCrypt;
@@ -54,5 +54,14 @@ class TokenCryptTest extends TestCase {
 
         $decArray = $t->decrypt3ncrArray($encTest);
         $this->assertEquals($decTest, $decArray);
+    }
+
+    public function testDecryptFail() {
+        $encs = array_keys($this->testVectors);
+        $fail = substr($encs[0], 0, -1);
+        $t = new TokenCrypt('a', 'b', 1000);
+        $this->assertNull($t->decrypt3ncr($fail));
+        $t = new TokenCrypt('a', 'c', 1000);
+        $this->assertNull($t->decrypt3ncr($encs[0]));
     }
 }
