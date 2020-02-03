@@ -1,5 +1,8 @@
 # tokencrypt-php (3ncr.org)
 
+[![Latest Stable Version](https://poser.pugx.org/3ncr/tokencrypt-php/v/stable)](https://packagist.org/packages/3ncr/tokencrypt-php) [![Total Downloads](https://poser.pugx.org/3ncr/tokencrypt-php/downloads)](https://packagist.org/packages/3ncr/tokencrypt-php) [![License](https://poser.pugx.org/3ncr/tokencrypt-php/license)](https://packagist.org/packages/3ncr/tokencrypt-php) [![Build Status](https://travis-ci.org/3ncr/tokencrypt-php.svg?branch=master)](https://travis-ci.org/3ncr/tokencrypt-php)
+
+
 3ncr.org is a standard for string encryption/decryption (algorithms + storage format). Originally it was intended for 
 encryption tokens in configuration files.  
 
