@@ -2,7 +2,7 @@
 <?php declare(strict_types=1);
 use ThreeEncr\TokenCrypt;
 
-$autoloads = ['/../../autoload.php', '/../autoload.php', '/../vendor/autoload.php', '/vendor/autoload.php'];
+$autoloads = ['/../../../autoload.php', '/../vendor/autoload.php'];
 
 foreach($autoloads as $autoload) {
     if (file_exists(__DIR__ .$autoload)) {
@@ -33,7 +33,13 @@ while(1) {
     if ($line === false) {
         exit(0);
     }
+    
+    $btrim = $line;
     $line = trim($line);
+    if ($btrim != $line) {
+        echo "warning: trimmed to '{$line}'\n";
+    }
+
     if ($line == 'q') {
         exit(0);
     }
