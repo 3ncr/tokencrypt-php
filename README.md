@@ -32,14 +32,14 @@ drive from serial numbers or MAC. Be creative.
 The more is better and slower. 
 If you are sure that your secrets are long and random, you can keep this value reasonable low.  
 
-After you created the class instance, you can just use encrypt3ncr and decrypt3ncr methods (the accept and return strings):
+After you created the class instance, you can just use encrypt3ncr and decrypt3ncr methods (they accept and return strings):
 
 ```php
-$token = '08019215-B205-4416-B2FB-132962F9952F'; // your secret API key 
+$token = '08019215-B205-4416-B2FB-132962F9952F'; // your secret you want to encrypt 
 $encryptedSecretToken = $tokenCrypt->encrypt3ncr($token);
 // now $encryptedSecretToken === '3ncr.org/1#pHRufQld0SajqjHx+FmLMcORfNQi1d674ziOPpG52hqW5+0zfJD91hjXsBsvULVtB017mEghGy3Ohj+GgQY5MQ'
 
-// ... some time laster in another context ...  
+// ... some time later in another context ...  
 
 $decryptedSecretToken = $tokenCrypt->decrypt3ncr($encryptedSecretToken); 
 // now $decryptedSecretToken === ''08019215-B205-4416-B2FB-132962F9952F';
