@@ -2,10 +2,11 @@
 <?php declare(strict_types=1);
 use ThreeEncr\TokenCrypt;
 
-$autoloads = [__DIR__ . '/../../autoload.php', __DIR__ . '/../vendor/autoload.php', __DIR__ . '/vendor/autoload.php'];
+$autoloads = ['/../../autoload.php', '/../autoload.php', '/../vendor/autoload.php', '/vendor/autoload.php'];
+
 foreach($autoloads as $autoload) {
-    if (file_exists($autoload)) {
-        require $autoload;
+    if (file_exists(__DIR__ .$autoload)) {
+        require __DIR__ .$autoload;
         break;
     }
 }
@@ -36,6 +37,10 @@ while(1) {
     if ($line == 'q') {
         exit(0);
     }
+    if ($line == '') {
+        echo "warning: empty string input\n";
+        continue;
+    }
     if (strpos($line, TokenCrypt::HEADER_V1) === 0) {
         $decr = $tokenCrypt->decrypt3ncr($line);
         if ($decr === false || $decr == $line) {
@@ -55,8 +60,34 @@ function canInitInteractively(): bool {
     return is_string($result) && (strlen($result) > 1);
 }
 
+function tryInitFromSecretLine(string $line): ?TokenCrypt {
+    // this is a special line to be stored in password manager 
+    // it looks liks the following 
+    // part1-@@-part2-@@-1000
+    $parts = explode("-@@-", $line, 3);
+    if (count($parts) != 3) {
+        return null;
+    }
+    echo "Info: parsing secret line\n";
+    if ((strlen($parts[0]) < 10)||(strlen($parts[1]) < 10)) {
+        echo "Error: malformed secret-line - part1 or part2 too short\n";
+        exit(1);
+    }
+    $iter = intval($parts[2]);
+    if ($iter == 0) {
+        echo "Error: malformed secret-line - bad interations number\n";
+        exit(1);
+    }
+    return new TokenCrypt($parts[0], $parts[1], $iter);
+}
+
 function initInteractive(): TokenCrypt {
-    $part1 = getPassword('Enter secret part 1: ');
+    $part1 = getPassword('Enter secret part 1 (or secret line): ');
+    $trySecretLine = tryInitFromSecretLine($part1);
+    if (!is_null($trySecretLine)) {
+        return $trySecretLine;
+    }
+
     $part2 = getPassword('Enter secret part 2: ');
 
     while (1) {

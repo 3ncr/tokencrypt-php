@@ -1,7 +1,8 @@
 {
   "name" : "3ncr/tokencrypt-php",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "MIT",
+  "bin": ["bin/tokencrypt-cmd"],
   "require" : {
     "php" : ">=7.2.0",
     "ext-openssl" : "*",
