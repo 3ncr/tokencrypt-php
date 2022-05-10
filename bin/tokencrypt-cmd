@@ -11,22 +11,32 @@ foreach($autoloads as $autoload) {
     }
 }
 
+if ($argc == 2 && $argv[1] == '-h') {
+    echo "Usage: ${argv[0]} [file with secrets]\n";
+    echo "       if file not exists, tool tries to launch in interactive mode\n";
+    echo "       supported file formats:\n";
+    echo "       - 3 lines, 1st line - secret, 2nd line - salt, 3rd line - rounds\n";
+    echo "       - 2 lines, 1st line ignored, 2nd line has secret, salt, rounds\n";
+    echo "         separated by -@@-\n";
+    exit(0);
+}
+
 $interactive = canInitInteractively();
 
 if ($interactive && $argc === 1) {
     $tokenCrypt = initInteractive();
 } else {
     if (!$interactive) {
-        echo "Warning: unable to read passwords from terminal\n";
+        echo "Warning: unable to read passwords from terminal".PHP_EOL;
     }
 
     $file = $argc < 2 ? 'secrets.txt' : $argv[1];
-    echo "Warning: reading file {$file} from command line\n";
+    echo "Warning: reading file {$file} from command line".PHP_EOL;
     $tokenCrypt = initFromFile($file);
 }
 
 
-echo "Interactive session: press Ctrl-D or type q to quit\n";
+echo "Interactive session: press Ctrl-D or type q to quit".PHP_EOL;
 
 while(1) {
     $line = readline("plain or encrypted text> ");
@@ -37,22 +47,22 @@ while(1) {
     $btrim = $line;
     $line = trim($line);
     if ($btrim != $line) {
-        echo "warning: trimmed to '{$line}'\n";
+        echo "warning: trimmed to '{$line}'".PHP_EOL;
     }
 
     if ($line == 'q') {
         exit(0);
     }
     if ($line == '') {
-        echo "warning: empty string input\n";
+        echo "warning: empty string input".PHP_EOL;
         continue;
     }
     if (strpos($line, TokenCrypt::HEADER_V1) === 0) {
         $decr = $tokenCrypt->decrypt3ncr($line);
         if ($decr === false || $decr == $line) {
-            echo "decryption error\n";
+            echo "decryption error".PHP_EOL;
         } else {
-            echo "decrypted plaintext: ".$decr."\n";
+            echo "decrypted plaintext: ".$decr.PHP_EOL;
         }
         continue;
     }
@@ -68,20 +78,20 @@ function canInitInteractively(): bool {
 
 function tryInitFromSecretLine(string $line): ?TokenCrypt {
     // this is a special line to be stored in password manager 
-    // it looks liks the following 
+    // it looks like the following
     // part1-@@-part2-@@-1000
     $parts = explode("-@@-", $line, 3);
     if (count($parts) != 3) {
         return null;
     }
     echo "Info: parsing secret line\n";
-    if ((strlen($parts[0]) < 10)||(strlen($parts[1]) < 10)) {
+    if ((strlen($parts[0]) < 1)||(strlen($parts[1]) < 1)) {
         echo "Error: malformed secret-line - part1 or part2 too short\n";
         exit(1);
     }
     $iter = intval($parts[2]);
     if ($iter == 0) {
-        echo "Error: malformed secret-line - bad interations number\n";
+        echo "Error: malformed secret-line - bad iterations number\n";
         exit(1);
     }
     return new TokenCrypt($parts[0], $parts[1], $iter);
@@ -115,11 +125,20 @@ function initInteractive(): TokenCrypt {
 }
 
 function initFromFile($fileName): TokenCrypt {
+    if (!file_exists($fileName)) {
+        echo "file ${fileName} not exists\n";
+        exit(1);
+    }
+
     $fileData = trim(file_get_contents($fileName));
     $items = array_map('trim', explode("\n", $fileData));
     if (count($items) < 2) {
         echo "Error: bad or non-existent {$fileName}\n";
         exit(1);
+    }
+    $tokenTry = tryInitFromSecretLine($items[1]);
+    if ($tokenTry !== null) {
+        return $tokenTry; 
     }
     if (count($items) < 3) {
         echo "Warning: no iterations count specified, using 1000\n";

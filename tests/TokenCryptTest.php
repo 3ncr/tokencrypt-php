@@ -1,10 +1,12 @@
 <?php declare(strict_types=1);
 
+namespace ThreeEncr\Tests;
+
 use PHPUnit\Framework\TestCase;
 use ThreeEncr\TokenCrypt;
 
-class TokenCryptTest extends TestCase {
-
+class TokenCryptTest extends TestCase
+{
     private $testVectors = [
         '3ncr.org/1#I09Dwt6q05ZrH8GQ0cp+g9Jm0hD0BmCwEdylCh8' => 'a',
         '3ncr.org/1#Y3/v2PY7kYQgveAn4AJ8zP+oOuysbs5btYLZ9vl8DLc' => 'test',
@@ -13,7 +15,8 @@ class TokenCryptTest extends TestCase {
         '3ncr.org/1#EPw7S5+BG6hn/9Sjf6zoYUCdwlzweeB+ahBIabUD6NogAcevXszOGHz9Jzv4vQ' => 'перевірка'
     ];
 
-    public function testBasic() {
+    public function testBasic()
+    {
         $t = new TokenCrypt('a', 'b', 1000);
 
         foreach ($this->testVectors as $k=>$v) {
@@ -21,7 +24,19 @@ class TokenCryptTest extends TestCase {
         }
     }
 
-    public function testIdentity() {
+
+    public function testCreateWithSecretLine()
+    {
+        $t = TokenCrypt::createWithSecretLine('shaashlick-@@-maashliyck-@@-1');
+
+        $this->assertEquals(
+            'test',
+            $t->decrypt3ncr('3ncr.org/1#vTHRT8wXugLe92KDzhdV97jHW7ZL2TDh7mQ6laEK9NI')
+        );
+    }
+
+    public function testIdentity()
+    {
         $t = new TokenCrypt('a', 'b', 1000);
         $srcs = array_values($this->testVectors);
 
@@ -32,7 +47,8 @@ class TokenCryptTest extends TestCase {
         }
     }
 
-    public function testDecrypt3ncrArray() {
+    public function testDecrypt3ncrArray()
+    {
         $encs = array_keys($this->testVectors);
 
         $encTest = [
@@ -56,7 +72,8 @@ class TokenCryptTest extends TestCase {
         $this->assertEquals($decTest, $decArray);
     }
 
-    public function testDecryptFail() {
+    public function testDecryptFail()
+    {
         $encs = array_keys($this->testVectors);
         $fail = substr($encs[0], 0, -1);
         $t = new TokenCrypt('a', 'b', 1000);

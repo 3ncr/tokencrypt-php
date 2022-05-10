@@ -6,7 +6,7 @@
 3ncr.org is a standard for string encryption/decryption (algorithms + storage format). Originally it was intended for 
 encryption tokens in configuration files.  
 
-3ncr.org v1 uses modern cryptographic primitives (SHA3-256, AES-256-GCM) and is fairly simple: 
+3ncr.org v1 uses AES-256-GCM and is fairly simple: 
 ```    
     header + base64(iv + data + tag) 
 ```
@@ -29,8 +29,8 @@ You can store them any preferred places: environment variables, files, shared me
 drive from serial numbers or MAC. Be creative. 
 
 `1000` - is a number of PBKDF2 rounds. 
-The more is better and slower. 
-If you are sure that your secrets are long and random, you can keep this value reasonable low.  
+The more is slower. 
+If you are sure that your secrets have 256 bit of entropy and fairly random, you can use '1' (essentially HMAC SHA3 hash)
 
 After you created the class instance, you can just use encrypt3ncr and decrypt3ncr methods (they accept and return strings):
 

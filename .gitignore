@@ -2,4 +2,4 @@
 vendor
 composer.phar
 secrets.txt
-.phpunit.result.cache
+*.cache

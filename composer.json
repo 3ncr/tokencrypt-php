@@ -1,6 +1,6 @@
 {
   "name" : "3ncr/tokencrypt-php",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "license": "MIT",
   "description": "Implementation of 3ncr.org V1 token(strings) encryption standard.",
   "bin": ["bin/tokencrypt-cmd"],
@@ -12,7 +12,28 @@
   "autoload" : {
     "psr-4" : { "ThreeEncr\\" : "src" }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "ThreeEncr\\Tests\\" : "tests"
+    }
+  },
   "require-dev": {
-    "phpunit/phpunit": "^8"
+    "phpunit/phpunit": "^8.5",
+    "friendsofphp/php-cs-fixer": "^3"
+  },
+  "scripts": {
+    "test": [
+      "phpunit -c $(pwd)/phpunit.xml"
+    ],
+    "lint-autofix": [
+      "./vendor/bin/php-cs-fixer fix"
+    ],
+    "lint": [
+      "./vendor/bin/php-cs-fixer fix --dry-run"
+    ],
+    "ci": [
+        "@lint",
+        "@test"
+    ]
   }
 }
