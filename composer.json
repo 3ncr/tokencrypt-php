@@ -35,5 +35,10 @@
         "@lint",
         "@test"
     ]
+  },
+  "config": {
+    "platform": {
+      "php": "7.2"
+    }
   }
 }
