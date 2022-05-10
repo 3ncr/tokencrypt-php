@@ -22,7 +22,7 @@ class TokenCrypt implements JsonSerializable
 
     /**
      * Creates object from a single string. Secret line is a crude 'format' for storing secret, salt and number
-     * of iterations in the same string (separated by -@@-). Secret and salt should be no less than 10 symbols.
+     * of iterations in the same string (separated by -@@-). Secret and salt should not be empty.
      *
      * @param string $line
      * @return ?TokenCrypt
@@ -34,8 +34,8 @@ class TokenCrypt implements JsonSerializable
         if (count($parts) != 3) {
             return null;
         }
-        if ((strlen($parts[0]) < 10)||(strlen($parts[1]) < 10)) {
-            throw new TokenCryptException('Malformed secret-line - part1 or part2 too short');
+        if ((strlen($parts[0]) < 1)||(strlen($parts[1]) < 1)) {
+            throw new TokenCryptException('Malformed secret-line - part1 or part2 empty');
         }
         $iter = intval($parts[2]);
         if ($iter == 0) {
