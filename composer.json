@@ -1,6 +1,6 @@
 {
   "name" : "3ncr/tokencrypt-php",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "license": "MIT",
   "description": "Implementation of 3ncr.org V1 token(strings) encryption standard.",
   "bin": ["bin/tokencrypt-cmd"],
