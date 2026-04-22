@@ -1,71 +1,102 @@
 # tokencrypt-php (3ncr.org)
 
-[![Latest Stable Version](https://poser.pugx.org/3ncr/tokencrypt-php/v/stable)](https://packagist.org/packages/3ncr/tokencrypt-php) [![Total Downloads](https://poser.pugx.org/3ncr/tokencrypt-php/downloads)](https://packagist.org/packages/3ncr/tokencrypt-php) [![License](https://poser.pugx.org/3ncr/tokencrypt-php/license)](https://packagist.org/packages/3ncr/tokencrypt-php) ![Build Status](https://github.com/3ncr/tokencrypt-php/actions/workflows/lint-and-test.yml/badge.svg)
+[![Lint & Test](https://github.com/3ncr/tokencrypt-php/actions/workflows/lint-and-test.yml/badge.svg)](https://github.com/3ncr/tokencrypt-php/actions/workflows/lint-and-test.yml)
+[![Latest Stable Version](https://poser.pugx.org/3ncr/tokencrypt-php/v/stable)](https://packagist.org/packages/3ncr/tokencrypt-php)
+[![Total Downloads](https://poser.pugx.org/3ncr/tokencrypt-php/downloads)](https://packagist.org/packages/3ncr/tokencrypt-php)
+[![License: MIT](https://poser.pugx.org/3ncr/tokencrypt-php/license)](https://packagist.org/packages/3ncr/tokencrypt-php)
 
+[3ncr.org](https://3ncr.org/) is a standard for string encryption / decryption
+(algorithms + storage format), originally intended for encrypting tokens in
+configuration files but usable for any UTF-8 string. v1 uses AES-256-GCM for
+authenticated encryption with a 12-byte random IV:
 
-3ncr.org is a standard for string encryption/decryption (algorithms + storage format). Originally it was intended for 
-encryption tokens in configuration files.  
-
-3ncr.org v1 uses AES-256-GCM and is fairly simple: 
-```    
-    header + base64(iv + data + tag) 
+```
+3ncr.org/1#<base64(iv[12] || ciphertext || tag[16])>
 ```
 
-Encrypted data looks like this `3ncr.org/1#pHRufQld0SajqjHx+FmLMcORfNQi1d674ziOPpG52hqW5+0zfJD91hjXsBsvULVtB017mEghGy3Ohj+GgQY5MQ`
+Encrypted values look like
+`3ncr.org/1#pHRufQld0SajqjHx+FmLMcORfNQi1d674ziOPpG52hqW5+0zfJD91hjXsBsvULVtB017mEghGy3Ohj+GgQY5MQ`.
 
-This is a PHP 8.1+ implementation.
+This is the PHP 8.1+ implementation.
+
+## Install
+
+```bash
+composer require 3ncr/tokencrypt-php
+```
+
+Requires PHP 8.1+ with `ext-openssl`, `ext-json`, and `ext-sodium` (the last is
+used for Argon2id key derivation).
 
 ## Usage
 
-### Recommended: raw 32-byte key
+Pick a constructor based on the entropy of your secret — see the
+[3ncr.org v1 KDF guidance](https://3ncr.org/1/#kdf) for the canonical
+recommendation.
 
-Pass a 32-byte binary string containing an AES-256 key. Derive it however you prefer —
-for passwords use Argon2id; for high-entropy inputs (random keys, API tokens) a single
-SHA3-256 hash is sufficient.
+### Recommended: raw 32-byte key (high-entropy secrets)
+
+If you already have a 32-byte AES-256 key (random key, API token hashed to 32
+bytes via SHA3-256, etc.), skip the KDF and pass it directly.
 
 ```php
 $key = random_bytes(32);                              // or: load from env / secret store
 $tokenCrypt = \ThreeEncr\TokenCrypt::fromRawKey($key);
 ```
 
-### Legacy: PBKDF2-SHA3 constructor
+### Recommended: Argon2id (passwords / low-entropy secrets)
 
-The original `(secret, salt, iterations)` constructor is kept for backward compatibility
-with data encrypted by earlier versions. It is deprecated — prefer `fromRawKey()` above
-for new code.
+For passwords or passphrases, use `fromArgon2id`. It uses the parameters
+recommended by the [3ncr.org v1 spec](https://3ncr.org/1/#kdf)
+(`m=19456 KiB, t=2, p=1`). The salt must be exactly 16 bytes (libsodium's
+`crypto_pwhash` requirement, which matches the spec's "at least 16 random
+bytes" recommendation at its minimum length and is interoperable with the Go
+and Node implementations when the same salt is used).
+
+```php
+$tokenCrypt = \ThreeEncr\TokenCrypt::fromArgon2id($password, $salt);
+```
+
+### Legacy: PBKDF2-SHA3 (existing data only)
+
+The original `(secret, salt, iterations)` constructor is kept for backward
+compatibility with data encrypted by earlier versions. It is deprecated —
+prefer `fromRawKey` or `fromArgon2id` for new code.
 
 ```php
 $tokenCrypt = new \ThreeEncr\TokenCrypt($secret, $salt, 1000);
 ```
 
-`$secret` and `$salt` are inputs to PBKDF2-SHA3 (one of them is key, the other is salt,
-but you need to store them both somewhere, preferably in different places).
-
-You can store them in any preferred places: environment variables, files, shared memory,
-derived from serial numbers or MAC. Be creative.
-
-`1000` is the number of PBKDF2 rounds. Higher is slower and more resistant to
-brute-force. If you are sure your secrets have 256 bits of entropy and are fairly random,
-you can use `1` (essentially a single HMAC SHA3 hash).
+`$secret` and `$salt` are inputs to PBKDF2-SHA3 (technically one is the key,
+the other is the salt, but you need to store them both somewhere, preferably
+in different places). `1000` is the number of PBKDF2 rounds.
 
 ### Encrypt / decrypt
 
-After you created the class instance, you can use `encrypt3ncr` and `decrypt3ncr` methods
-(they accept and return strings):
+After constructing an instance, use `encrypt3ncr` and `decrypt3ncr`:
 
 ```php
-$token = '08019215-B205-4416-B2FB-132962F9952F'; // your secret you want to encrypt 
+$token = '08019215-B205-4416-B2FB-132962F9952F'; // your secret you want to encrypt
 $encryptedSecretToken = $tokenCrypt->encrypt3ncr($token);
-// now $encryptedSecretToken === '3ncr.org/1#pHRufQld0SajqjHx+FmLMcORfNQi1d674ziOPpG52hqW5+0zfJD91hjXsBsvULVtB017mEghGy3Ohj+GgQY5MQ'
+// $encryptedSecretToken === '3ncr.org/1#pHRufQld0SajqjHx+FmLMcORfNQi1d674ziOPpG52hqW5+0zfJD91hjXsBsvULVtB017mEghGy3Ohj+GgQY5MQ'
 
-// ... some time later in another context ...  
+// ... some time later in another context ...
 
-$decryptedSecretToken = $tokenCrypt->decrypt3ncr($encryptedSecretToken); 
-// now $decryptedSecretToken === ''08019215-B205-4416-B2FB-132962F9952F';
+$decryptedSecretToken = $tokenCrypt->decrypt3ncr($encryptedSecretToken);
+// $decryptedSecretToken === '08019215-B205-4416-B2FB-132962F9952F'
 ```
 
-Or you can read JSON-file and decrypt its values: 
+`decrypt3ncr` returns the input unchanged when it does not start with the
+`3ncr.org/1#` header, so it is safe to route every configuration value through
+it regardless of whether it was encrypted.
+
+For JSON config files you can decrypt all 3ncr-encoded values in one pass:
+
+```php
+$encConfig = json_decode(file_get_contents('config.json'), true);
+$config = $tokenCrypt->decrypt3ncrArray($encConfig);
 ```
-$encConfig = json_decode(file_get_contents('config.json'), false); 
-$config = $token->decrypt3ncrArray($encConfig);   
-```
+
+## License
+
+MIT — see [LICENSE](LICENSE).
