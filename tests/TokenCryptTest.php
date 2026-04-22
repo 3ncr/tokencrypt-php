@@ -134,4 +134,52 @@ class TokenCryptTest extends TestCase
         $this->expectException(TokenCryptException::class);
         TokenCrypt::fromRawKey('');
     }
+
+    public function testFromArgon2idIdentity()
+    {
+        $t = TokenCrypt::fromArgon2id('correct horse battery staple', '0123456789abcdef');
+
+        foreach (array_values($this->testVectors) as $src) {
+            $enc = $t->encrypt3ncr($src);
+            $dec = $t->decrypt3ncr($enc);
+            $this->assertEquals($src, $dec);
+        }
+    }
+
+    public function testFromArgon2idWrongSecretFails()
+    {
+        $salt = '0123456789abcdef';
+        $right = TokenCrypt::fromArgon2id('right secret', $salt);
+        $enc = $right->encrypt3ncr('hello');
+
+        $wrong = TokenCrypt::fromArgon2id('wrong secret', $salt);
+        $this->assertNull($wrong->decrypt3ncr($enc));
+    }
+
+    public function testFromArgon2idMatchesKnownKey()
+    {
+        // Cross-checked against Go (argon2.IDKey) and Node (hash-wasm argon2id)
+        // with the same secret/salt/params: same derived 32-byte key.
+        $expected = hex2bin('832e52b959b967b570ee4781f6c7bda7ced019ca266ac781fd2d94d4e853b0cd');
+        $t = TokenCrypt::fromArgon2id('correct horse battery staple', '0123456789abcdef');
+        $rawEquivalent = TokenCrypt::fromRawKey($expected);
+
+        $enc = $t->encrypt3ncr('interop');
+        $this->assertEquals('interop', $rawEquivalent->decrypt3ncr($enc));
+
+        $enc2 = $rawEquivalent->encrypt3ncr('interop');
+        $this->assertEquals('interop', $t->decrypt3ncr($enc2));
+    }
+
+    public function testFromArgon2idRejectsShortSalt()
+    {
+        $this->expectException(TokenCryptException::class);
+        TokenCrypt::fromArgon2id('secret', 'short');
+    }
+
+    public function testFromArgon2idRejectsLongSalt()
+    {
+        $this->expectException(TokenCryptException::class);
+        TokenCrypt::fromArgon2id('secret', str_repeat('x', 17));
+    }
 }

@@ -8,6 +8,13 @@ class TokenCrypt implements JsonSerializable
 {
     public const HEADER_V1 = '3ncr.org/1#';
     public const KEY_SIZE = 32;
+
+    // 3ncr.org recommended Argon2id parameters for interoperability
+    // (see https://3ncr.org/1/ - Key Derivation section).
+    public const ARGON2ID_MEMORY_KIB = 19456;
+    public const ARGON2ID_TIME_COST = 2;
+    public const ARGON2ID_SALT_BYTES = 16;
+
     private $key;
 
     /**
@@ -48,6 +55,44 @@ class TokenCrypt implements JsonSerializable
         $instance = (new \ReflectionClass(self::class))->newInstanceWithoutConstructor();
         $instance->key = $key;
         return $instance;
+    }
+
+    /**
+     * Creates a TokenCrypt instance using the 3ncr.org recommended Argon2id
+     * KDF for low-entropy secrets (passwords, passphrases). Parameters follow
+     * the spec (https://3ncr.org/1/ - Key Derivation): memory 19456 KiB,
+     * iterations 2, parallelism 1, output 32 bytes.
+     *
+     * Uses libsodium's crypto_pwhash, which requires a salt of exactly 16
+     * bytes. This matches the spec's "at least 16 random bytes" recommendation
+     * at its minimum length and is interoperable with Argon2id keys derived by
+     * the Go and Node implementations when the same 16-byte salt is used.
+     *
+     * @param string $secret - secret / passphrase to derive the key from
+     * @param string $salt - salt, must be exactly 16 bytes
+     * @throws TokenCryptException if ext-sodium is missing or $salt length is wrong
+     */
+    public static function fromArgon2id(string $secret, string $salt): self
+    {
+        if (!function_exists('sodium_crypto_pwhash')) {
+            throw new TokenCryptException('ext-sodium is required for Argon2id key derivation');
+        }
+        if (strlen($salt) !== self::ARGON2ID_SALT_BYTES) {
+            throw new TokenCryptException(sprintf(
+                'Argon2id salt must be exactly %d bytes, got %d',
+                self::ARGON2ID_SALT_BYTES,
+                strlen($salt)
+            ));
+        }
+        $key = sodium_crypto_pwhash(
+            self::KEY_SIZE,
+            $secret,
+            $salt,
+            self::ARGON2ID_TIME_COST,
+            self::ARGON2ID_MEMORY_KIB * 1024,
+            SODIUM_CRYPTO_PWHASH_ALG_ARGON2ID13
+        );
+        return self::fromRawKey($key);
     }
 
     /**
