@@ -17,22 +17,41 @@ This is a PHP 7.2+ implementation.
 
 ## Usage
 
+### Recommended: raw 32-byte key
+
+Pass a 32-byte binary string containing an AES-256 key. Derive it however you prefer —
+for passwords use Argon2id; for high-entropy inputs (random keys, API tokens) a single
+SHA3-256 hash is sufficient.
+
+```php
+$key = random_bytes(32);                              // or: load from env / secret store
+$tokenCrypt = \ThreeEncr\TokenCrypt::fromRawKey($key);
+```
+
+### Legacy: PBKDF2-SHA3 constructor
+
+The original `(secret, salt, iterations)` constructor is kept for backward compatibility
+with data encrypted by earlier versions. It is deprecated — prefer `fromRawKey()` above
+for new code.
 
 ```php
 $tokenCrypt = new \ThreeEncr\TokenCrypt($secret, $salt, 1000);
 ```
 
-`$secret` and `$salt` - are encryption keys (technically one of them is key, another is salt, but you need to store them both somewhere, 
-preferably in different places). 
+`$secret` and `$salt` are inputs to PBKDF2-SHA3 (one of them is key, the other is salt,
+but you need to store them both somewhere, preferably in different places).
 
-You can store them any preferred places: environment variables, files, shared memory, 
-drive from serial numbers or MAC. Be creative. 
+You can store them in any preferred places: environment variables, files, shared memory,
+derived from serial numbers or MAC. Be creative.
 
-`1000` - is a number of PBKDF2 rounds. 
-The more is slower. 
-If you are sure that your secrets have 256 bit of entropy and fairly random, you can use '1' (essentially HMAC SHA3 hash)
+`1000` is the number of PBKDF2 rounds. Higher is slower and more resistant to
+brute-force. If you are sure your secrets have 256 bits of entropy and are fairly random,
+you can use `1` (essentially a single HMAC SHA3 hash).
 
-After you created the class instance, you can just use encrypt3ncr and decrypt3ncr methods (they accept and return strings):
+### Encrypt / decrypt
+
+After you created the class instance, you can use `encrypt3ncr` and `decrypt3ncr` methods
+(they accept and return strings):
 
 ```php
 $token = '08019215-B205-4416-B2FB-132962F9952F'; // your secret you want to encrypt 

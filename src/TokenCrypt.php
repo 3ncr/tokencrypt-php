@@ -7,17 +7,47 @@ use \Exception;
 class TokenCrypt implements JsonSerializable
 {
     public const HEADER_V1 = '3ncr.org/1#';
+    public const KEY_SIZE = 32;
     private $key;
 
     /**
-     * TokenCrypt constructor.
+     * TokenCrypt constructor (legacy PBKDF2-SHA3 KDF).
+     *
      * @param $secret - secret for encryption
      * @param $salt - salt for encryption
      * @param int $iter - number of PBKDF2 iterations
+     * @deprecated PBKDF2-SHA3 is the legacy KDF. Derive your own 32-byte key and
+     *             pass it to self::fromRawKey() (Argon2id for passwords, SHA3-256
+     *             for high-entropy inputs — see 3ncr.org spec).
      */
     public function __construct(string $secret, string $salt, int $iter=1000)
     {
         $this->key = hash_pbkdf2('sha3-256', $secret, $salt, $iter, 0, true);
+    }
+
+    /**
+     * Creates a TokenCrypt instance from a raw 32-byte AES-256 key.
+     *
+     * Derive the key however you prefer — Argon2id for passwords, a single
+     * SHA3-256 hash for high-entropy inputs (random keys, API tokens). See the
+     * 3ncr.org spec for recommended parameters.
+     *
+     * @param string $key - raw 32-byte key (binary string)
+     * @throws TokenCryptException if $key is not exactly KEY_SIZE bytes
+     */
+    public static function fromRawKey(string $key): self
+    {
+        $len = strlen($key);
+        if ($len !== self::KEY_SIZE) {
+            throw new TokenCryptException(sprintf(
+                'Raw key must be exactly %d bytes, got %d',
+                self::KEY_SIZE,
+                $len
+            ));
+        }
+        $instance = (new \ReflectionClass(self::class))->newInstanceWithoutConstructor();
+        $instance->key = $key;
+        return $instance;
     }
 
     /**
