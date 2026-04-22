@@ -4,6 +4,7 @@ namespace ThreeEncr\Tests;
 
 use PHPUnit\Framework\TestCase;
 use ThreeEncr\TokenCrypt;
+use ThreeEncr\TokenCryptException;
 
 class TokenCryptTest extends TestCase
 {
@@ -80,5 +81,57 @@ class TokenCryptTest extends TestCase
         $this->assertNull($t->decrypt3ncr($fail));
         $t = new TokenCrypt('a', 'c', 1000);
         $this->assertNull($t->decrypt3ncr($encs[0]));
+    }
+
+    public function testFromRawKeyDecryptsCanonicalVectors()
+    {
+        $rawKey = hash_pbkdf2('sha3-256', 'a', 'b', 1000, 0, true);
+        $t = TokenCrypt::fromRawKey($rawKey);
+
+        foreach ($this->testVectors as $k => $v) {
+            $this->assertEquals($v, $t->decrypt3ncr($k));
+        }
+    }
+
+    public function testFromRawKeyIdentity()
+    {
+        $rawKey = random_bytes(32);
+        $t = TokenCrypt::fromRawKey($rawKey);
+
+        foreach (array_values($this->testVectors) as $src) {
+            $enc = $t->encrypt3ncr($src);
+            $dec = $t->decrypt3ncr($enc);
+            $this->assertEquals($src, $dec);
+        }
+    }
+
+    public function testFromRawKeyInteropWithLegacyConstructor()
+    {
+        $legacy = new TokenCrypt('a', 'b', 1000);
+        $rawKey = hash_pbkdf2('sha3-256', 'a', 'b', 1000, 0, true);
+        $raw = TokenCrypt::fromRawKey($rawKey);
+
+        foreach (array_values($this->testVectors) as $src) {
+            $this->assertEquals($src, $raw->decrypt3ncr($legacy->encrypt3ncr($src)));
+            $this->assertEquals($src, $legacy->decrypt3ncr($raw->encrypt3ncr($src)));
+        }
+    }
+
+    public function testFromRawKeyRejectsShortKey()
+    {
+        $this->expectException(TokenCryptException::class);
+        TokenCrypt::fromRawKey(str_repeat("\x00", 31));
+    }
+
+    public function testFromRawKeyRejectsLongKey()
+    {
+        $this->expectException(TokenCryptException::class);
+        TokenCrypt::fromRawKey(str_repeat("\x00", 33));
+    }
+
+    public function testFromRawKeyRejectsEmptyKey()
+    {
+        $this->expectException(TokenCryptException::class);
+        TokenCrypt::fromRawKey('');
     }
 }
