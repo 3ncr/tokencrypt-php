@@ -10,5 +10,6 @@ return $config->setRules([
         '@PSR2'                  => true,
         'single_quote'           => true,
     ])
+    ->setUnsupportedPhpVersionAllowed(true)
     ->setFinder($finder)
 ;
