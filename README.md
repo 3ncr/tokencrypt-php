@@ -13,7 +13,7 @@ encryption tokens in configuration files.
 
 Encrypted data looks like this `3ncr.org/1#pHRufQld0SajqjHx+FmLMcORfNQi1d674ziOPpG52hqW5+0zfJD91hjXsBsvULVtB017mEghGy3Ohj+GgQY5MQ`
 
-This is a PHP 7.2+ implementation.
+This is a PHP 8.1+ implementation.
 
 ## Usage
 
