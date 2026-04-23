@@ -3,6 +3,7 @@
 [![Lint & Test](https://github.com/3ncr/tokencrypt-php/actions/workflows/lint-and-test.yml/badge.svg)](https://github.com/3ncr/tokencrypt-php/actions/workflows/lint-and-test.yml)
 [![Latest Stable Version](https://poser.pugx.org/3ncr/tokencrypt-php/v/stable)](https://packagist.org/packages/3ncr/tokencrypt-php)
 [![Total Downloads](https://poser.pugx.org/3ncr/tokencrypt-php/downloads)](https://packagist.org/packages/3ncr/tokencrypt-php)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/3ncr/tokencrypt-php/badge)](https://scorecard.dev/viewer/?uri=github.com/3ncr/tokencrypt-php)
 [![License: MIT](https://poser.pugx.org/3ncr/tokencrypt-php/license)](https://packagist.org/packages/3ncr/tokencrypt-php)
 
 [3ncr.org](https://3ncr.org/) is a standard for string encryption / decryption
