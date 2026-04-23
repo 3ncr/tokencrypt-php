@@ -18,7 +18,9 @@ authenticated encryption with a 12-byte random IV:
 Encrypted values look like
 `3ncr.org/1#pHRufQld0SajqjHx+FmLMcORfNQi1d674ziOPpG52hqW5+0zfJD91hjXsBsvULVtB017mEghGy3Ohj+GgQY5MQ`.
 
-This is the PHP 8.1+ implementation.
+This is the PHP 8.1+ implementation. See
+[github.com/3ncr](https://github.com/3ncr) for implementations in other
+languages (Go, Node.js, Python, Rust, Java, C#, Ruby).
 
 ## Install
 
