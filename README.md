@@ -6,9 +6,9 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/3ncr/tokencrypt-php/badge)](https://scorecard.dev/viewer/?uri=github.com/3ncr/tokencrypt-php)
 [![License: MIT](https://poser.pugx.org/3ncr/tokencrypt-php/license)](https://packagist.org/packages/3ncr/tokencrypt-php)
 
-[3ncr.org](https://3ncr.org/) is a standard for string encryption / decryption
-(algorithms + storage format), originally intended for encrypting tokens in
-configuration files but usable for any UTF-8 string. v1 uses AES-256-GCM for
+[3ncr.org](https://3ncr.org/) is a tiny encrypted-string format for config
+values, tokens, and app secrets — encrypt a UTF-8 string in one language,
+store it as a recognizable value, and decrypt it in another. v1 uses AES-256-GCM for
 authenticated encryption with a 12-byte random IV:
 
 ```
